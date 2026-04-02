@@ -14,7 +14,273 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chat_messages: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          receiver_id: string
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          receiver_id: string
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          receiver_id?: string
+          sender_id?: string
+        }
+        Relationships: []
+      }
+      friends: {
+        Row: {
+          addressee_id: string
+          created_at: string | null
+          id: string
+          requester_id: string
+          status: string | null
+        }
+        Insert: {
+          addressee_id: string
+          created_at?: string | null
+          id?: string
+          requester_id: string
+          status?: string | null
+        }
+        Update: {
+          addressee_id?: string
+          created_at?: string | null
+          id?: string
+          requester_id?: string
+          status?: string | null
+        }
+        Relationships: []
+      }
+      likes: {
+        Row: {
+          created_at: string | null
+          id: string
+          place_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          place_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          place_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "likes_place_id_fkey"
+            columns: ["place_id"]
+            isOneToOne: false
+            referencedRelation: "places"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      places: {
+        Row: {
+          avg_food_cost: number | null
+          avg_hotel_cost: number | null
+          avg_ticket_cost: number | null
+          avg_transport_cost: number | null
+          category: string | null
+          city: string | null
+          country: string
+          created_at: string | null
+          culture: string | null
+          currency: string | null
+          description: string | null
+          famous_food: string | null
+          history: string | null
+          id: string
+          image_url: string | null
+          images: string[] | null
+          lat: number | null
+          lng: number | null
+          name: string
+          population: string | null
+          state: string | null
+          top_attractions: string[] | null
+        }
+        Insert: {
+          avg_food_cost?: number | null
+          avg_hotel_cost?: number | null
+          avg_ticket_cost?: number | null
+          avg_transport_cost?: number | null
+          category?: string | null
+          city?: string | null
+          country: string
+          created_at?: string | null
+          culture?: string | null
+          currency?: string | null
+          description?: string | null
+          famous_food?: string | null
+          history?: string | null
+          id?: string
+          image_url?: string | null
+          images?: string[] | null
+          lat?: number | null
+          lng?: number | null
+          name: string
+          population?: string | null
+          state?: string | null
+          top_attractions?: string[] | null
+        }
+        Update: {
+          avg_food_cost?: number | null
+          avg_hotel_cost?: number | null
+          avg_ticket_cost?: number | null
+          avg_transport_cost?: number | null
+          category?: string | null
+          city?: string | null
+          country?: string
+          created_at?: string | null
+          culture?: string | null
+          currency?: string | null
+          description?: string | null
+          famous_food?: string | null
+          history?: string | null
+          id?: string
+          image_url?: string | null
+          images?: string[] | null
+          lat?: number | null
+          lng?: number | null
+          name?: string
+          population?: string | null
+          state?: string | null
+          top_attractions?: string[] | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          display_name: string | null
+          gender: string | null
+          id: string
+          language: string | null
+          phone: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          gender?: string | null
+          id?: string
+          language?: string | null
+          phone?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          gender?: string | null
+          id?: string
+          language?: string | null
+          phone?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          id: string
+          photos: string[] | null
+          place_id: string
+          rating: number | null
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          photos?: string[] | null
+          place_id: string
+          rating?: number | null
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          photos?: string[] | null
+          place_id?: string
+          rating?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_place_id_fkey"
+            columns: ["place_id"]
+            isOneToOne: false
+            referencedRelation: "places"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      travel_history: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          distance_km: number | null
+          id: string
+          place_id: string | null
+          place_name: string | null
+          started_at: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          distance_km?: number | null
+          id?: string
+          place_id?: string | null
+          place_name?: string | null
+          started_at?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          distance_km?: number | null
+          id?: string
+          place_id?: string | null
+          place_name?: string | null
+          started_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "travel_history_place_id_fkey"
+            columns: ["place_id"]
+            isOneToOne: false
+            referencedRelation: "places"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
