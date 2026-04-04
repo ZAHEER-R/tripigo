@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import ReactMarkdown from 'react-markdown';
 
 interface Message { role: 'user' | 'assistant'; content: string; }
 
@@ -11,6 +12,11 @@ const AiAgent = () => {
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, loading]);
 
   const sendMessage = async () => {
     if (!input.trim() || loading) return;
@@ -24,7 +30,7 @@ const AiAgent = () => {
         body: { messages: [...messages, userMsg].map(m => ({ role: m.role, content: m.content })) }
       });
       if (error) throw error;
-      setMessages(prev => [...prev, { role: 'assistant', content: data?.reply || 'Sorry, I could not generate a response. Please try again.' }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: data?.reply || 'Sorry, I could not generate a response.' }]);
     } catch {
       setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, something went wrong. Please try again!' }]);
     } finally {
@@ -38,17 +44,23 @@ const AiAgent = () => {
         {messages.map((msg, i) => (
           <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             {msg.role === 'assistant' && (
-              <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center flex-shrink-0">
+              <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center flex-shrink-0 mt-1">
                 <Bot className="w-4 h-4 text-primary-foreground" />
               </div>
             )}
             <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${
               msg.role === 'user' ? 'gradient-primary text-primary-foreground' : 'bg-card border border-border text-card-foreground'
             }`}>
-              {msg.content}
+              {msg.role === 'assistant' ? (
+                <div className="prose prose-sm prose-green max-w-none dark:prose-invert [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_h1]:text-lg [&_h1]:font-bold [&_h1]:mb-2 [&_h2]:text-base [&_h2]:font-bold [&_h2]:mb-2 [&_h3]:text-sm [&_h3]:font-bold [&_h3]:mb-1 [&_p]:mb-2 [&_li]:mb-1 [&_strong]:font-bold [&_hr]:my-2 [&_blockquote]:border-l-2 [&_blockquote]:border-primary [&_blockquote]:pl-3 [&_blockquote]:italic">
+                  <ReactMarkdown>{msg.content}</ReactMarkdown>
+                </div>
+              ) : (
+                msg.content
+              )}
             </div>
             {msg.role === 'user' && (
-              <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
+              <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0 mt-1">
                 <User className="w-4 h-4 text-secondary-foreground" />
               </div>
             )}
@@ -68,6 +80,7 @@ const AiAgent = () => {
             </div>
           </div>
         )}
+        <div ref={bottomRef} />
       </div>
       <div className="sticky bottom-16 md:bottom-0 px-4 py-3 bg-background border-t border-border">
         <div className="max-w-2xl mx-auto flex gap-2">
