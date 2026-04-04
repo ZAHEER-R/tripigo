@@ -1,11 +1,12 @@
 import { useParams, Link } from 'react-router-dom';
 import { placesData } from '@/data/places';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, MapPin, Users, Utensils, Landmark, Star, Camera, History, Palette, Calculator, Search, ExternalLink, Heart } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { supabase } from '@/integrations/supabase/client';
 
 const tabs = [
   { key: 'overview', label: 'Overview', icon: Landmark },
@@ -25,14 +26,36 @@ const PlaceDetail = () => {
   const { user } = useAuth();
   const [reviewText, setReviewText] = useState('');
   const [reviewRating, setReviewRating] = useState(5);
-  const [reviews, setReviews] = useState([
-    { id: '1', user: 'Traveler Mike', rating: 5, content: 'Amazing place! Must visit for everyone.', likes: 24 },
-    { id: '2', user: 'Wanderlust Sarah', rating: 4, content: 'Beautiful destination with great food.', likes: 18 },
-  ]);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [userProfile, setUserProfile] = useState<any>(null);
 
-  // Budget calculator state
   const [people, setPeople] = useState(2);
   const [days, setDays] = useState(3);
+
+  useEffect(() => {
+    if (user) fetchUserProfile();
+    if (id) fetchReviews();
+  }, [user, id]);
+
+  const fetchUserProfile = async () => {
+    if (!user) return;
+    const { data } = await supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle();
+    setUserProfile(data);
+  };
+
+  const fetchReviews = async () => {
+    if (!id) return;
+    const { data } = await supabase.from('reviews').select('*').eq('place_id', id).order('created_at', { ascending: false });
+    if (data && data.length > 0) {
+      const userIds = [...new Set(data.map(r => r.user_id))];
+      const { data: profiles } = await supabase.from('profiles').select('user_id, display_name, username').in('user_id', userIds);
+      const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
+      setReviews(data.map(r => ({
+        ...r,
+        userName: profileMap.get(r.user_id)?.display_name || (profileMap.get(r.user_id) as any)?.username || 'Traveler',
+      })));
+    }
+  };
 
   if (!place) {
     return (
@@ -52,24 +75,23 @@ const PlaceDetail = () => {
   const grandTotal = Object.values(totalBudget).reduce((a, b) => a + b, 0);
 
   const handleGoogleSearch = (query: string) => {
-    window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
+    window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank', 'noopener,noreferrer');
   };
 
-  const submitReview = () => {
-    if (!reviewText.trim()) return;
-    setReviews(prev => [...prev, {
-      id: Date.now().toString(),
-      user: user?.email?.split('@')[0] || 'Anonymous',
-      rating: reviewRating,
+  const submitReview = async () => {
+    if (!reviewText.trim() || !user || !id) return;
+    await supabase.from('reviews').insert({
+      user_id: user.id,
+      place_id: id,
       content: reviewText,
-      likes: 0,
-    }]);
+      rating: reviewRating,
+    });
     setReviewText('');
+    fetchReviews();
   };
 
   return (
     <div className="min-h-screen pt-14 md:pt-16 pb-20 md:pb-8">
-      {/* Hero */}
       <div className="relative h-56 md:h-72">
         <img src={place.image_url} alt={place.name} className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
@@ -89,7 +111,6 @@ const PlaceDetail = () => {
         </div>
       </div>
 
-      {/* Tabs */}
       <div className="sticky top-14 md:top-16 z-10 bg-background border-b border-border">
         <div className="flex overflow-x-auto gap-1 px-4 py-2">
           {tabs.map(tab => (
@@ -97,9 +118,7 @@ const PlaceDetail = () => {
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                activeTab === tab.key
-                  ? 'gradient-primary text-primary-foreground shadow-sm'
-                  : 'text-muted-foreground hover:bg-secondary'
+                activeTab === tab.key ? 'gradient-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-secondary'
               }`}
             >
               <tab.icon className="w-3.5 h-3.5" />
@@ -109,7 +128,6 @@ const PlaceDetail = () => {
         </div>
       </div>
 
-      {/* Tab Content */}
       <div className="container mx-auto px-4 py-6 max-w-3xl">
         {activeTab === 'overview' && (
           <div className="space-y-4">
@@ -138,7 +156,7 @@ const PlaceDetail = () => {
               </div>
             </div>
             <a
-              href={`https://www.google.com/maps?q=${place.lat},${place.lng}`}
+              href={`https://www.google.com/maps/search/?api=1&query=${place.lat},${place.lng}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 gradient-primary text-primary-foreground rounded-xl px-4 py-3 font-medium hover:opacity-90 transition-opacity"
@@ -193,24 +211,22 @@ const PlaceDetail = () => {
         {activeTab === 'reviews' && (
           <div className="space-y-4">
             <h2 className="text-xl font-bold text-foreground flex items-center gap-2"><Star className="w-5 h-5 text-primary" /> Reviews</h2>
+            {reviews.length === 0 && (
+              <p className="text-sm text-muted-foreground">No reviews yet. Be the first to review!</p>
+            )}
             {reviews.map(review => (
               <div key={review.id} className="bg-card rounded-xl p-4 border border-border">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-primary-foreground text-xs font-bold">
-                      {review.user[0]}
+                      {review.userName[0]}
                     </div>
-                    <span className="font-medium text-sm text-foreground">{review.user}</span>
+                    <span className="font-medium text-sm text-foreground">{review.userName}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star key={i} className={`w-3.5 h-3.5 ${i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted'}`} />
-                      ))}
-                    </div>
-                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Heart className="w-3 h-3 text-red-500" /> {review.likes}
-                    </span>
+                  <div className="flex">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star key={i} className={`w-3.5 h-3.5 ${i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted'}`} />
+                    ))}
                   </div>
                 </div>
                 <p className="text-sm text-foreground">{review.content}</p>
@@ -218,7 +234,7 @@ const PlaceDetail = () => {
             ))}
             {user ? (
               <div className="bg-card rounded-xl p-4 border border-border space-y-3">
-                <p className="font-medium text-foreground">Write a Review</p>
+                <p className="font-medium text-foreground">Write a Review as {userProfile?.display_name || (userProfile as any)?.username || 'User'}</p>
                 <div className="flex gap-1">
                   {[1, 2, 3, 4, 5].map(r => (
                     <button key={r} onClick={() => setReviewRating(r)}>
@@ -245,9 +261,6 @@ const PlaceDetail = () => {
             <div className="grid grid-cols-2 gap-3">
               <div className="relative rounded-xl overflow-hidden">
                 <img src={place.image_url} alt={place.name} className="w-full h-40 object-cover" />
-                <div className="absolute bottom-2 right-2 flex items-center gap-1 glass rounded-full px-2 py-1 text-xs text-foreground">
-                  <Heart className="w-3 h-3 text-red-500" /> 42
-                </div>
               </div>
             </div>
             {user && (

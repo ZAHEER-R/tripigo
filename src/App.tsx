@@ -6,7 +6,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
 import Navbar from "@/components/tripigo/Navbar";
 import Home from "./pages/Home";
-import MapView from "./pages/MapView";
 import AiAgent from "./pages/AiAgent";
 import Friends from "./pages/Friends";
 import Profile from "./pages/Profile";
@@ -26,7 +25,6 @@ const App = () => (
           <Navbar />
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/map" element={<MapView />} />
             <Route path="/ai-agent" element={<AiAgent />} />
             <Route path="/friends" element={<Friends />} />
             <Route path="/profile" element={<Profile />} />
