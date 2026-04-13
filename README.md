@@ -3,6 +3,7 @@
 Welcome to Tripigo! An intelligent travel planning application designed to help you create the perfect trip.
 
 ![Tripigo Logo](tripigo%20logo.png)
+https://tripigo.lovable.app/
 
 ## 🌍 About Tripigo
 
