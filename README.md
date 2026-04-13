@@ -2,8 +2,6 @@
 
 Welcome to Tripigo! An intelligent travel planning application designed to help you create the perfect trip.
 
-![Tripigo AI](TripigoAI.jpeg)
-
 ![Tripigo Logo](tripigo%20logo.png)
 
 ## 🌍 About Tripigo
